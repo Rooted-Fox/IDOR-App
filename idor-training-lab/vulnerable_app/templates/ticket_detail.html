@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Ticket #{{ ticket.id }}{% endblock %}
+{% block page_title %}<i class="bi bi-headset me-2"></i>Ticket #{{ ticket.id }}{% endblock %}
+{% block content %}
+{% if ticket.user_id != user.id and app_mode == 'vulnerable' %}
+<div class="ownership-warn">
+  <i class="bi bi-exclamation-triangle-fill me-1"></i>
+  <strong>[VULN-IDOR-005]</strong> You are reading a support ticket belonging to
+  <strong>{{ owner.full_name }}</strong>. Private communications, passwords, and sensitive HR matters are exposed.
+</div>
+{% endif %}
+<div class="row g-3">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header d-flex align-items-center gap-2">
+        <span>{{ ticket.subject }}</span>
+        {% if ticket.priority=='critical' %}<span class="badge bg-danger">Critical</span>{% elif ticket.priority=='high' %}<span class="badge bg-warning text-dark">High</span>{% elif ticket.priority=='medium' %}<span class="badge bg-info">Medium</span>{% else %}<span class="badge bg-secondary">Low</span>{% endif %}
+        {% if ticket.user_id != user.id and app_mode == 'vulnerable' %}<span class="badge bg-danger" style="font-size:.65rem">IDOR EXPOSED</span>{% endif %}
+      </div>
+      <div class="card-body">
+        <div class="detail-row"><div class="detail-label">Ticket ID</div><div class="detail-value">#{{ ticket.id }}</div></div>
+        <div class="detail-row"><div class="detail-label">Category</div><div class="detail-value">{{ ticket.category or '—' }}</div></div>
+        <div class="detail-row"><div class="detail-label">Status</div><div class="detail-value">
+          {% if ticket.status=='open' %}<span class="badge bg-success">Open</span>{% else %}<span class="badge bg-secondary">Resolved</span>{% endif %}
+        </div></div>
+        <div class="detail-row"><div class="detail-label">Submitted By</div><div class="detail-value">{{ owner.full_name if owner else '—' }}</div></div>
+        <div class="detail-row"><div class="detail-label">Date</div><div class="detail-value text-muted">{{ ticket.created_at[:10] }}</div></div>
+      </div>
+    </div>
+    <div class="card mt-3">
+      <div class="card-header"><i class="bi bi-chat-text me-1"></i>Description</div>
+      <div class="card-body">
+        <div class="doc-content">{{ ticket.description }}</div>
+      </div>
+    </div>
+    {% if ticket.resolution %}
+    <div class="card mt-3 border-success">
+      <div class="card-header" style="background:#f0fdf4;color:#166534"><i class="bi bi-check-circle me-1"></i>Resolution</div>
+      <div class="card-body"><div class="doc-content" style="background:#f0fdf4">{{ ticket.resolution }}</div></div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="col-md-4">
+    <div class="card"><div class="card-body">
+      <a href="/tickets" class="btn btn-outline-secondary btn-sm w-100"><i class="bi bi-arrow-left me-1"></i>Back to Tickets</a>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

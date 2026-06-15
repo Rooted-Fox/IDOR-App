@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Order #{{ order.id }}{% endblock %}
+{% block page_title %}<i class="bi bi-bag-check me-2"></i>Order #{{ order.id }}{% endblock %}
+{% block content %}
+{% if order.user_id != user.id and app_mode == 'vulnerable' %}
+<div class="ownership-warn">
+  <i class="bi bi-exclamation-triangle-fill me-1"></i>
+  <strong>[VULN-IDOR-002]</strong> You are viewing order #{{ order.id }} belonging to
+  <strong>{{ owner.full_name }}</strong> ({{ owner.username }}). No ownership check was performed.
+</div>
+{% endif %}
+<div class="row g-3">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">Order Details {% if order.user_id != user.id and app_mode == 'vulnerable' %}<span class="badge bg-danger ms-2" style="font-size:.65rem">IDOR EXPOSED</span>{% endif %}</div>
+      <div class="card-body">
+        <div class="detail-row"><div class="detail-label">Order ID</div><div class="detail-value"><strong>#{{ order.id }}</strong></div></div>
+        <div class="detail-row"><div class="detail-label">Product</div><div class="detail-value">{{ order.product_name }}</div></div>
+        <div class="detail-row"><div class="detail-label">Quantity</div><div class="detail-value">{{ order.quantity }}</div></div>
+        <div class="detail-row"><div class="detail-label">Unit Price</div><div class="detail-value">${{ "%.2f"|format(order.unit_price) }}</div></div>
+        <div class="detail-row"><div class="detail-label">Total</div><div class="detail-value"><strong>${{ "%.2f"|format(order.total_price) }}</strong></div></div>
+        <div class="detail-row"><div class="detail-label">Status</div><div class="detail-value">
+          {% if order.status=='completed' %}<span class="badge bg-success">Completed</span>
+          {% elif order.status=='shipped' %}<span class="badge bg-info">Shipped</span>
+          {% else %}<span class="badge bg-warning text-dark">Pending</span>{% endif %}
+        </div></div>
+        <div class="detail-row"><div class="detail-label">Ship To</div><div class="detail-value">{{ order.shipping_address or '—' }}</div></div>
+        <div class="detail-row"><div class="detail-label">Notes</div><div class="detail-value text-muted">{{ order.notes or '—' }}</div></div>
+        <div class="detail-row"><div class="detail-label">Date</div><div class="detail-value text-muted">{{ order.created_at[:10] }}</div></div>
+        {% if order.user_id != user.id %}
+        <div class="detail-row"><div class="detail-label">Owner</div><div class="detail-value">
+          {% if app_mode == 'vulnerable' %}
+          <span class="sensitive-value">{{ owner.full_name }} ({{ owner.username }})</span>
+          <span class="confidential-badge ms-2">Exposed via IDOR</span>
+          {% else %}
+          <em class="text-muted">You (admin view)</em>
+          {% endif %}
+        </div></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body text-center">
+        <a href="/invoices" class="btn btn-outline-primary btn-sm w-100 mb-2"><i class="bi bi-receipt me-1"></i>View Invoices</a>
+        <a href="/orders" class="btn btn-outline-secondary btn-sm w-100"><i class="bi bi-arrow-left me-1"></i>Back to Orders</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+
+  vulnerable:
+    build:
+      context: ./vulnerable_app
+      dockerfile: ../Dockerfile
+    container_name: corpportal-vulnerable
+    ports:
+      - "5001:5001"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_APP=app.py
+    volumes:
+      - vulnerable-data:/app/data
+    working_dir: /app
+    command: >
+      sh -c "python seed_data.py && python app.py"
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - lab-net
+
+  secure:
+    build:
+      context: ./secure_app
+      dockerfile: ../Dockerfile
+    container_name: corpportal-secure
+    ports:
+      - "5002:5002"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_APP=app.py
+      - SECRET_KEY=lab-secure-secret-not-for-prod-change-me
+    volumes:
+      - secure-data:/app/data
+    working_dir: /app
+    command: >
+      sh -c "python seed_data.py && python app.py"
+    networks:
+      - lab-net
+
+volumes:
+  vulnerable-data:
+  secure-data:
+
+networks:
+  lab-net:
+    driver: bridge

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Document: {{ doc.filename }}{% endblock %}
+{% block page_title %}<i class="bi bi-file-earmark-text me-2"></i>{{ doc.filename }}{% endblock %}
+{% block content %}
+{% if doc.user_id != user.id and app_mode == 'vulnerable' %}
+<div class="ownership-warn">
+  <i class="bi bi-exclamation-triangle-fill me-1"></i>
+  <strong>[VULN-IDOR-004]</strong> You are reading a document belonging to
+  <strong>{{ owner.full_name }}</strong>. {% if doc.is_confidential %}This document is marked CONFIDENTIAL.{% endif %}
+</div>
+{% endif %}
+<div class="row g-3">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header d-flex align-items-center gap-2">
+        <span>{{ doc.filename }}</span>
+        {% if doc.is_confidential %}<span class="confidential-badge"><i class="bi bi-lock-fill"></i>Confidential</span>{% endif %}
+        {% if doc.user_id != user.id and app_mode == 'vulnerable' %}<span class="badge bg-danger" style="font-size:.65rem">IDOR EXPOSED</span>{% endif %}
+      </div>
+      <div class="card-body">
+        <div class="detail-row"><div class="detail-label">Description</div><div class="detail-value">{{ doc.description or '—' }}</div></div>
+        <div class="detail-row"><div class="detail-label">Type</div><div class="detail-value"><code>{{ doc.content_type }}</code></div></div>
+        <div class="detail-row"><div class="detail-label">Owner</div><div class="detail-value">{{ owner.full_name if owner else 'Unknown' }}</div></div>
+        <div class="detail-row"><div class="detail-label">Uploaded</div><div class="detail-value text-muted">{{ doc.created_at[:10] }}</div></div>
+      </div>
+    </div>
+    <div class="card mt-3">
+      <div class="card-header">
+        <i class="bi bi-file-text me-1"></i>Document Content
+        {% if doc.user_id != user.id and app_mode == 'vulnerable' %}
+        <span class="badge bg-danger ms-2" style="font-size:.65rem">⚠ Unauthorized Read</span>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        <div class="doc-content">{{ doc.content }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card"><div class="card-body">
+      <a href="/documents" class="btn btn-outline-secondary btn-sm w-100"><i class="bi bi-arrow-left me-1"></i>Back to Documents</a>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

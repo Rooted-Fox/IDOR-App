@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Support Tickets{% endblock %}
+{% block page_title %}<i class="bi bi-headset me-2"></i>Support Tickets{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>My Support Tickets</span>
+    {% if app_mode == 'vulnerable' %}<span class="badge bg-danger" style="font-size:.65rem">VULN-IDOR-005: Try /tickets/&lt;any_id&gt;</span>{% endif %}
+  </div>
+  <div class="card-body p-0">
+    {% if tickets %}
+    <table class="table mb-0">
+      <thead><tr>
+        <th class="ps-3">ID</th><th>Subject</th><th>Category</th><th>Priority</th><th>Status</th><th class="pe-3">Date</th>
+      </tr></thead>
+      <tbody>
+        {% for t in tickets %}
+        <tr>
+          <td class="ps-3"><a href="/tickets/{{ t.id }}" class="fw-semibold text-decoration-none">#{{ t.id }}</a></td>
+          <td>{{ t.subject }}</td>
+          <td class="text-muted">{{ t.category or '—' }}</td>
+          <td>
+            {% if t.priority=='critical' %}<span class="badge bg-danger badge-status">Critical</span>
+            {% elif t.priority=='high' %}<span class="badge bg-warning text-dark badge-status">High</span>
+            {% elif t.priority=='medium' %}<span class="badge bg-info badge-status">Medium</span>
+            {% else %}<span class="badge bg-secondary badge-status">Low</span>{% endif %}
+          </td>
+          <td>{% if t.status=='open' %}<span class="badge bg-success-subtle text-success badge-status">Open</span>
+              {% else %}<span class="badge bg-secondary-subtle text-secondary badge-status">Resolved</span>{% endif %}</td>
+          <td class="pe-3 text-muted">{{ t.created_at[:10] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="text-center text-muted py-5">No tickets found.</div>{% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Invoice {{ invoice.invoice_number }}{% endblock %}
+{% block page_title %}<i class="bi bi-receipt me-2"></i>Invoice {{ invoice.invoice_number }}{% endblock %}
+{% block content %}
+{% if invoice.user_id != user.id and app_mode == 'vulnerable' %}
+<div class="ownership-warn">
+  <i class="bi bi-exclamation-triangle-fill me-1"></i>
+  <strong>[VULN-IDOR-003]</strong> You are viewing invoice belonging to <strong>{{ owner.full_name }}</strong>.
+  Payment details including credit card info and bank account numbers are exposed.
+</div>
+{% endif %}
+<div class="row g-3">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">Invoice Details {% if invoice.user_id != user.id and app_mode == 'vulnerable' %}<span class="badge bg-danger ms-2" style="font-size:.65rem">IDOR EXPOSED</span>{% endif %}</div>
+      <div class="card-body">
+        <div class="detail-row"><div class="detail-label">Invoice Number</div><div class="detail-value"><strong>{{ invoice.invoice_number }}</strong></div></div>
+        <div class="detail-row"><div class="detail-label">Amount</div><div class="detail-value">${{ "%.2f"|format(invoice.amount) }}</div></div>
+        <div class="detail-row"><div class="detail-label">Tax</div><div class="detail-value">${{ "%.2f"|format(invoice.tax) }}</div></div>
+        <div class="detail-row"><div class="detail-label">Total Due</div><div class="detail-value"><strong style="font-size:1.1rem">${{ "%.2f"|format(invoice.amount + invoice.tax) }}</strong></div></div>
+        <div class="detail-row"><div class="detail-label">Status</div><div class="detail-value">
+          {% if invoice.status=='paid' %}<span class="badge bg-success">Paid</span>{% else %}<span class="badge bg-danger">Unpaid</span>{% endif %}
+        </div></div>
+        <div class="detail-row"><div class="detail-label">Due Date</div><div class="detail-value">{{ invoice.due_date or '—' }}</div></div>
+        <div class="detail-row">
+          <div class="detail-label">Payment Details {% if invoice.user_id != user.id and app_mode == 'vulnerable' %}<br><span style="font-size:.65rem;color:#dc2626">⚠ SENSITIVE</span>{% endif %}</div>
+          <div class="detail-value"><span class="sensitive-value">{{ invoice.payment_details or 'N/A' }}</span></div>
+        </div>
+        {% if order %}<div class="detail-row"><div class="detail-label">Related Order</div><div class="detail-value"><a href="/orders/{{ order.id }}">#{{ order.id }} — {{ order.product_name }}</a></div></div>{% endif %}
+        <div class="detail-row"><div class="detail-label">Created</div><div class="detail-value text-muted">{{ invoice.created_at[:10] }}</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card"><div class="card-body">
+      <a href="/invoices" class="btn btn-outline-secondary btn-sm w-100"><i class="bi bi-arrow-left me-1"></i>Back to Invoices</a>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

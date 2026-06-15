@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Profile — {{ viewed_user.full_name }}{% endblock %}
+{% block page_title %}<i class="bi bi-person-circle me-2"></i>User Profile{% endblock %}
+
+{% block content %}
+{% if not is_own and app_mode == 'vulnerable' %}
+<div class="ownership-warn">
+  <i class="bi bi-exclamation-triangle-fill me-1"></i>
+  <strong>[VULN-IDOR-001]</strong> You are viewing <strong>{{ viewed_user.full_name }}'s</strong> profile
+  as user <strong>{{ current_user.username }}</strong>. The application performed no ownership check.
+  This exposes salary, SSN, home address, and contact information of other users.
+</div>
+{% endif %}
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-body text-center py-4">
+        <div class="mx-auto mb-3" style="width:72px;height:72px;border-radius:50%;background:#2563eb;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#fff">
+          {{ viewed_user.full_name[0] }}
+        </div>
+        <h5 class="mb-1">{{ viewed_user.full_name }}</h5>
+        <div class="text-muted small mb-2">@{{ viewed_user.username }}</div>
+        <span class="badge {% if viewed_user.role == 'admin' %}bg-danger{% elif viewed_user.role == 'manager' %}bg-warning text-dark{% else %}bg-secondary{% endif %} mb-2">
+          {{ viewed_user.role|capitalize }}
+        </span>
+        {% if viewed_user.department %}
+        <div class="text-muted" style="font-size:.8rem">{{ viewed_user.department }}</div>
+        {% endif %}
+        {% if not is_own %}
+        <div class="alert alert-warning py-2 mt-3" style="font-size:.78rem">
+          <i class="bi bi-eye-fill me-1"></i>Viewing another user's profile
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-person-lines-fill me-1"></i>Profile Details
+        {% if not is_own and app_mode == 'vulnerable' %}
+        <span class="badge bg-danger ms-2" style="font-size:.65rem">IDOR EXPOSED</span>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        <div class="detail-row">
+          <div class="detail-label">Full Name</div>
+          <div class="detail-value">{{ viewed_user.full_name }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Username</div>
+          <div class="detail-value"><code>{{ viewed_user.username }}</code></div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Email Address</div>
+          <div class="detail-value">{{ viewed_user.email }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Phone</div>
+          <div class="detail-value">
+            {{ viewed_user.phone or '—' }}
+            {% if not is_own and app_mode == 'vulnerable' %}
+            <span class="ms-2 confidential-badge"><i class="bi bi-exclamation"></i>Exposed</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Home Address</div>
+          <div class="detail-value">
+            {{ viewed_user.address or '—' }}
+            {% if not is_own and app_mode == 'vulnerable' %}
+            <span class="ms-2 confidential-badge"><i class="bi bi-exclamation"></i>Exposed</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Role</div>
+          <div class="detail-value">
+            <span class="badge {% if viewed_user.role == 'admin' %}bg-danger{% elif viewed_user.role == 'manager' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+              {{ viewed_user.role|capitalize }}
+            </span>
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Department</div>
+          <div class="detail-value">{{ viewed_user.department or '—' }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">
+            Annual Salary
+            {% if not is_own and app_mode == 'vulnerable' %}
+            <br><span style="font-size:.65rem;color:#dc2626">⚠ SENSITIVE</span>
+            {% endif %}
+          </div>
+          <div class="detail-value">
+            {% if viewed_user.salary %}
+            <span class="sensitive-value">${{ "{:,.2f}".format(viewed_user.salary) }}</span>
+            {% else %}—{% endif %}
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">
+            SSN
+            {% if not is_own and app_mode == 'vulnerable' %}
+            <br><span style="font-size:.65rem;color:#dc2626">⚠ SENSITIVE</span>
+            {% endif %}
+          </div>
+          <div class="detail-value">
+            {% if viewed_user.ssn %}
+            <span class="sensitive-value">{{ viewed_user.ssn }}</span>
+            {% else %}—{% endif %}
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Member Since</div>
+          <div class="detail-value text-muted">{{ viewed_user.created_at[:10] }}</div>
+        </div>
+      </div>
+    </div>
+
+    {% if not is_own and app_mode == 'vulnerable' %}
+    <div class="card mt-3 border-danger">
+      <div class="card-header" style="background:#fef2f2;color:#dc2626;font-size:.82rem">
+        <i class="bi bi-bug me-1"></i>Vulnerability Details — VULN-IDOR-001
+      </div>
+      <div class="card-body" style="font-size:.8rem">
+        <strong>Attack Vector:</strong> <code>GET /profile/{{ viewed_user.id }}</code>
+        (authenticated as <strong>{{ current_user.username }}</strong>)<br>
+        <strong>Root Cause:</strong> No ownership check on <code>profile_view()</code> — user ID taken from URL without validation.<br>
+        <strong>Data Exposed:</strong> Full name, email, phone, home address, salary (${{ "{:,.0f}".format(viewed_user.salary) if viewed_user.salary else 'N/A' }}), SSN.<br>
+        <strong>Fix:</strong> Add <code>if user_id != session['user_id'] and role != 'admin': abort(403)</code>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
